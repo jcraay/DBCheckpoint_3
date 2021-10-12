@@ -1,2 +1,3 @@
 # DBCheckpoint_3
-Test
+Checkpoint 3 
+Authors: Jenny Crary, Noah Hufnagel, Alex Sepeczi, Jason Tysl
