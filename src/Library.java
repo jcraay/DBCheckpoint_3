@@ -81,7 +81,7 @@ class movieOrder {
 
 public class Library {
   
-	private static String DATABASE = "Library.db";
+	private static String DATABASE = "LibraryFinal.db";
     static BufferedReader obj = new BufferedReader(new InputStreamReader(System.in));
     static Connection conn;
     static HashMap artist = new HashMap<String, artist>();
@@ -147,7 +147,7 @@ public class Library {
      *            the Statement class, tipically used for static SQL SELECT
      *            statements
      */
-    public static void sqlQuery(Connection conn, String sql) {
+    public static void sqlQuery( String sql) {
 //    	StringBuilder sb= new StringBuilder();
         try {
             Statement stmt = conn.createStatement();
@@ -224,26 +224,16 @@ public class Library {
                 String artistName = obj.readLine();
                 query= "SELECT * FROM Artist WHERE Artist.Name = \""+ artistName+ "\";";
                 System.out.print("\n\n\n");
-                sqlQuery(conn, query);
+                sqlQuery(query);
                 System.out.print("\n\n\n");
-//                if (artist.containsKey(artistName)) {
-//                    System.out.println("Found: " + artist.get(artistName).toString());
-//                } else {
-//                    System.out.println("Artist not found.");
-//                }
                 break;
             case "track":
                 System.out.println("Enter track name");
                 String trackName = obj.readLine();
                 query= "SELECT * FROM Track WHERE Track.Name = \""+ trackName+ "\";";
                 System.out.print("\n\n\n");
-                sqlQuery(conn, query);
+                sqlQuery(query);
                 System.out.print("\n\n\n");
-//                if (track.containsKey(trackName)) {
-//                    System.out.println("Found: " + track.get(trackName).toString());
-//                } else {
-//                    System.out.println("Track not found.");
-//                }
                 break;
         }
     }
@@ -259,9 +249,10 @@ public class Library {
                 System.out.println("Add artist name.");
                 String artistName = obj.readLine();
                 query= "Insert INTO Artist (Name) VALUES (\""+ artistName+ "\");";
-                System.out.print("\n\n\n");
-                sqlQuery(conn, query);
-                System.out.print("\n\n\n");
+                sqlQuery(query);
+                System.out.println("\n\n");//seperate by a few new lines for readability
+                System.out.println(artistName + " Added!");
+                System.out.println("\n\n");//seperate by a few new lines for readability
 //                if (artist.containsKey(artistName)) {
 //                    System.out.println("Artist already in database.");
 //                } else {
@@ -275,7 +266,9 @@ public class Library {
                 query= "SELECT * FROM Track WHERE Track.Name = \""+ trackName+ "\";";
 			try {
 				if (conn.createStatement().executeQuery(query).next()) {
+					System.out.println("\n\n");//seperate by a few new lines for readability
                     System.out.println("Track already in database.");
+                    System.out.println("\n\n");//seperate by a few new lines for readability
                 } else {
                 	System.out.println("Enter Album Product Number.");
                     String prodNum = obj.readLine();
@@ -288,9 +281,12 @@ public class Library {
                     
                     query="Insert INTO Track (Name, AlbumProductNumber, Genre, Length, ArtistName) VALUES"+
                     "(\""+trackName+"\","+ prodNum+ ",\""+ 
-                    		genre+"\","+ length+",\""+aName+"\")";
+                    		genre+"\",\""+ length+"\",\""+aName+"\");";
                     System.out.println(query);
+                    sqlQuery(query);
+                    System.out.println("\n\n");//seperate by a few new lines for readability
                     System.out.println("Track added.");
+                    System.out.println("\n\n");//seperate by a few new lines for readability
                 }
 			} catch (SQLException e) {
 				// TODO Auto-generated catch block
@@ -301,7 +297,7 @@ public class Library {
     }
 
     private static void order() throws IOException, SQLException {
-        System.out.println("Enter:\nOrder\nActivate");
+        System.out.println("Enter:\nMovie\nActivate");
 
         String response = obj.readLine().toLowerCase();
         String query;
@@ -320,8 +316,8 @@ public class Library {
             	String EOD= obj.readLine();
             	String Status="Ordered";
             	//only ask for more basic info i the movie isnt already in the system
-            	if(!conn.createStatement().executeQuery(
-            			"SELECT * FROM Media WHERE Media.ProductNumber = \""+ prodNum+ "\";").next()) {
+            	query="SELECT * FROM Media WHERE Media.ProductNumber = \""+ prodNum+ "\";";
+            	if(!conn.createStatement().executeQuery(query).next()) {         		
             		//movie not already in system ask preliminary info
             		System.out.println("Enter Movie Name");
             		String movName= obj.readLine();
@@ -339,30 +335,47 @@ public class Library {
             		String Genre= obj.readLine();
             		System.out.println("Enter Movie DirectorName");
             		String DirName= obj.readLine();
-            		
-            		query= "INSERT INTO Media (ProductNumber, Year, Name, Type, Quantity, QuantityOrdered, LibraryCardNumber, "+
+            		query= "INSERT INTO Media (ProductNumber, Year, Name, Type, Quantity, QuantityOrdered, "+
             				"Status) VALUES ("+
             				prodNum+", \""+year+"\"\", \""+movName+" \", \" "+type+"\", "+
-            				quantityIn+", "+ qty+", NULL, \""+Status+"\");";
-            		sqlQuery(conn, query);
+            				quantityIn+", "+ qty+", \""+Status+"\");";
+            		sqlQuery(query);
+            		
             		query= "INSERT INTO Movie (ProductNumber, ContentRating, Length, Genre, DirectorName) VALUES("+
             				prodNum+", \""+Rating+"\", \""+Length+"\", \""+Genre+"\", \""+DirName+"\");";
-            		sqlQuery(conn, query);
+            		sqlQuery(query);
             	}else {
             		query= "UPDATE Media SET QuantityOrdered="+qty+",Status=\""+Status+"\" WHERE Media.ProductNumber="+prodNum;
-            		sqlQuery(conn, query);
+            		sqlQuery(query);
             	}
-            	query= "INSERT INTO Orders (OrderNumber,Price, EstimatedDateOfArrival) VALUES("+
-            			orderNum+", \""+price+"\", \""+EOD+"\");";
-            	sqlQuery(conn, query);
-            	
+            	query= "INSERT INTO Orders (OrderNumber,Price, EstimatedDateOfArrival, ProductNumber) VALUES("+
+            			orderNum+", \""+price+"\", \""+EOD+"\", "+ prodNum+");";
+            	sqlQuery(query);
+            	System.out.println("\n\n");//seperate by a few new lines for readability
+            	System.out.println("Order Entered into Database!");
+            	System.out.println("\n\n");//seperate by a few new lines for readability
                 break;
             case "activate":
-            	System.out.println("Enter item ProductNumber");
-            	String prodNumber= obj.readLine();
-            	query= "UPDATE Media SET QuantityOrdered=0, Status= \"Not Ordered\" WHERE Media.ProductNumber="+prodNumber;
-        		sqlQuery(conn, query);
-                break;
+            	System.out.println("Enter OrderNumber");
+            	String ordNum= obj.readLine();
+            	query="SELECT * FROM Orders WHERE Orders.OrderNumber = \""+ ordNum+ "\";";
+            	if((conn.createStatement().executeQuery(query).next())) {  
+            		query="SELECT ProductNumber FROM Orders WHERE Orders.OrderNumber = \""+ ordNum+ "\";";
+            		String prodNumber=conn.createStatement().executeQuery(query).getString(1);
+            		query= "UPDATE Media SET QuantityOrdered=0, Status= \"Not Ordered\" WHERE Media.ProductNumber="+prodNumber;
+            		sqlQuery(query);
+            		query= "DELETE FROM Orders WHERE Orders.OrderNumber="+ordNum;
+            		sqlQuery(query);
+            		System.out.println("\n\n");//seperate by a few new lines for readability
+            		System.out.println("Order Activated!");
+            		System.out.println("\n\n");//seperate by a few new lines for readability
+                    break;
+            	}else {
+            		System.out.println("\n\n");//seperate by a few new lines for readability
+            		System.out.println("Order Does Not Exist");
+            		System.out.println("\n\n");//seperate by a few new lines for readability
+            	}
+            	
         }
     }
 
@@ -374,24 +387,17 @@ public class Library {
     			"SELECT * FROM Artist WHERE Artist.Name = \""+ artistName+ "\";").next()) {
             System.out.println(artistName + " found. What field would you like to edit?\n-Name");
             String field = obj.readLine();
-            System.out.println("What would you like to change"+ field+" to?");
+            System.out.println("What would you like to change "+ field+" to?");
             String newField = obj.readLine();
-            query= "UPDATE Artist SET " +field+"= "+newField+ "WHERE Artist.Name="+artistName;
-//            switch (field) {
-//                case "name":
-//                    System.out.println("What would you like to change the name to?");
-//                    String newName = obj.readLine();
-//                    artist old = (artist) artist.get(artistName);
-//                    artist.remove(artistName);
-//                    old.setName(newName);
-//                    artist.put(newName, old);
-//                    break;
-//                default:
-//                    System.out.println("Field not found.");
-//                    break;
-//            }
+            query= "UPDATE Artist SET " +field+"= \'"+newField+ "\' WHERE Artist.Name=\'"+artistName+"\'";
+            sqlQuery(query);
+            System.out.println("\n\n");//seperate by a few new lines for readability
+            System.out.println("Artist Name Changed");//seperate by a few new lines for readability
+            System.out.println("\n\n");//seperate by a few new lines for readability
         } else {
+        	System.out.println("\n\n");//seperate by a few new lines for readability
             System.out.println("No artist found.");
+            System.out.println("\n\n");//seperate by a few new lines for readability
         }
     }
 
@@ -406,23 +412,26 @@ public class Library {
         String query="";
         switch (i) {
         case 1:
-        	query="SELECT TRACK.Title"+
+        	System.out.println("Enter Artist in question");
+        	String Artist= obj.readLine();
+        	System.out.println("Enter Year in question");
+        	String Year= obj.readLine();
+        	query="SELECT Track.Name"+
         	" FROM TRACK, MEDIA, ARTIST"+
         	" WHERE Artist.name = Track.artistName"+
         	" AND Media.ProductNumber = Track.AlbumProductNumber"+
-        	" AND Artist.name = ARTIST"+
-        	" AND Media.year < YEAR";
+        	" AND Artist.name = \'"+ Artist+"\' "+
+        	" AND Media.year < \'"+Year+"\';";
     		break;
     	case 2:
     		query="SELECT COUNT(*)"+
-    		" FROM Media, Albums, ChecksOut, Patron"+
+    		" FROM Media, Album, ChecksOut, Patron"+
     		" WHERE Album.ProductNumber = Media.ProductNumber"+
-    		" AND Media.LibraryCardNumber = Patron.LibraryCardNumber"+
     		" AND ChecksOut.ProductNumber = Media.ProductNumber"+
     		" AND ChecksOut.LibraryCardNumber = Patron.LibraryCardNumber";
     		break;
     	case 3:
-    		query="SELECT Name"+
+    		query="SELECT Actor.Name"+
     				" FROM (SELECT COUNT(*) as numOut, Media.ProductNumber as productNum"+
     						" FROM Media, Movie, ChecksOut"+
     						" WHERE Movie.ProductNumber= Media.ProductNumber"+
@@ -435,10 +444,10 @@ public class Library {
     		break;
     	case 4:
     		query="Select Artist.Name"+
-    				" From (SELECT COUNT(*)*Media.Length as timeListened,Media.ProductNumber as ProductNum"+
+    				" From (SELECT COUNT(*)*Album.Length as timeListened,Media.ProductNumber as ProductNum"+
     						" FROM Media, Album, ChecksOut"+
     						" WHERE Album.ProductNumber= Media.ProductNumber"+
-    						" AND Media.ProductNumber= ChecksOut.ProductNumber) as AlbumCheckedOut"+
+    						" AND Media.ProductNumber= ChecksOut.ProductNumber) as AlbumCheckedOut, Artist"+
     					" Order By timeListened"+
     					" Limit 1";
     		break;
@@ -447,18 +456,20 @@ public class Library {
     				" FROM (SELECT COUNT(*) AS count, Patron.Name AS name" +
     					" FROM Media, Movie, ChecksOut, Patron" +
     					" WHERE Movie.ProductNumber = Media.ProductNumber" +
-    					" AND Media.LibraryCardNumber = Patron.LibraryCardNumber	" +
     					" AND ChecksOut.ProductNumber = Media.ProductNumber" +
     					" AND ChecksOut.LibraryCardNumber = Patron.LibraryCardNumber)" +
     				" AS MOVIECOUNT";
     		break;
     	default:
+    		System.out.println("\n\n");//seperate by a few new lines for readability
     		System.err.println("INVALID INPUT");
     		break;
         }
         if(!query.equals("")) {
+        	System.out.println("\n\n");//seperate by a few new lines for readability
         	//run query
-    		sqlQuery(conn, query);
+    		sqlQuery(query);
+    		System.out.println("\n\n");//seperate by a few new lines for readability
         }
     }
 }
